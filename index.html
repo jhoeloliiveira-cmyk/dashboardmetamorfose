@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrafficFlow — Gestão de Tráfego Pago</title>
+  <meta name="description" content="Dashboard premium para gestão centralizada de tráfego pago" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<!-- ============================================================
+     LAYOUT
+     ============================================================ -->
+<div class="app-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <aside id="sidebar" class="sidebar" role="navigation">
+    <a class="sidebar-logo" href="#" onclick="navigate('overview');return false">
+      <div class="logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+          <polyline points="16 7 22 7 22 13"></polyline>
+        </svg>
+      </div>
+      <span class="logo-text">Traffic<span>Flow</span></span>
+    </a>
+
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Principal</span>
+
+      <button class="nav-item active" data-view="overview">
+        <i data-lucide="layout-dashboard"></i>
+        Visão Geral
+      </button>
+
+      <button class="nav-item" data-view="clients">
+        <i data-lucide="users"></i>
+        Clientes
+      </button>
+
+      <button class="nav-item" data-view="rankings">
+        <i data-lucide="trophy"></i>
+        Rankings
+      </button>
+
+      <span class="nav-section-label">Ferramentas</span>
+
+      <button class="nav-item" data-view="assistant">
+        <i data-lucide="bot"></i>
+        Assistente IA
+      </button>
+
+      <button class="nav-item" data-view="settings">
+        <i data-lucide="settings"></i>
+        Configurações
+      </button>
+
+      <button class="nav-item nav-cta" onclick="openAddClientModal()">
+        <i data-lucide="plus-circle"></i>
+        Novo Cliente
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      TrafficFlow v1.0.0 &mdash; Modo Demo
+    </div>
+  </aside>
+
+  <!-- Backdrop for mobile -->
+  <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
+  <!-- ── Main ─────────────────────────────────────────────────── -->
+  <div class="main-content">
+
+    <!-- Top Bar -->
+    <header class="top-bar" role="banner">
+      <button id="menu-toggle" class="menu-toggle" aria-label="Menu">
+        <i data-lucide="menu"></i>
+      </button>
+      <span class="top-bar-title" id="topbar-title">Visão Geral</span>
+
+      <div class="search-box">
+        <i data-lucide="search" class="search-icon"></i>
+        <input id="global-search" type="text" placeholder="Buscar cliente..." />
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page-content" role="main">
+
+      <!-- Period Selector (shared) -->
+      <div class="period-bar" id="period-buttons" aria-label="Filtro de período"></div>
+
+      <!-- ────────────────────────────────────────────────────────
+           SECTION: OVERVIEW
+           ──────────────────────────────────────────────────────── -->
+      <section id="section-overview" class="section">
+        <div class="section-header">
+          <h2><i data-lucide="layout-dashboard"></i> Visão Geral</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-secondary" onclick="exportAllCSV()"><i data-lucide="download"></i> CSV</button>
+            <button class="btn-primary"   onclick="openAddClientModal()"><i data-lucide="plus"></i> Novo Cliente</button>
+          </div>
+        </div>
+
+        <!-- KPI Summary Grid -->
+        <div class="kpi-grid" id="ov-kpi-grid"></div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+          <div class="chart-card" style="grid-column:1/-1">
+            <div class="chart-card-title"><i data-lucide="trending-up"></i> Investimento por Cliente — Últimos 30 dias</div>
+            <div class="chart-container"><canvas id="chart-ov-line"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title"><i data-lucide="bar-chart-2"></i> Leads por Cliente (Período)</div>
+            <div class="chart-container"><canvas id="chart-ov-bar"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title"><i data-lucide="users"></i> Resumo por Cliente</div>
+            <div id="ov-client-cards" style="max-height:260px;overflow-y:auto;padding:4px 0;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ────────────────────────────────────────────────────────
+           SECTION: CLIENTS
+           ──────────────────────────────────────────────────────── -->
+      <section id="section-clients" class="section hidden">
+        <div class="section-header">
+          <h2><i data-lucide="users"></i> Clientes <span id="clients-count" class="count-badge">0</span></h2>
+          <button class="btn-primary" onclick="openAddClientModal()"><i data-lucide="plus"></i> Novo Cliente</button>
+        </div>
+
+        <div class="filters-row">
+          <select id="filter-status" class="filter-select">
+            <option value="all">Todos os status</option>
+            <option value="active">Ativos</option>
+            <option value="paused">Pausados</option>
+          </select>
+          <select id="filter-niche" class="filter-select"></select>
+        </div>
+
+        <div class="clients-grid" id="clients-grid"></div>
+      </section>
+
+      <!-- ────────────────────────────────────────────────────────
+           SECTION: CLIENT DETAIL
+           ──────────────────────────────────────────────────────── -->
+      <section id="section-client-detail" class="section hidden">
+        <div id="cd-header"></div>
+
+        <!-- KPI Grid -->
+        <div class="kpi-grid" id="cd-kpi-grid"></div>
+
+        <!-- Main chart with tabs -->
+        <div class="chart-card" id="cd-chart-area" style="margin-bottom:24px"></div>
+
+        <!-- Campaigns breakdown chart -->
+        <div class="chart-card" style="margin-bottom:24px">
+          <div class="chart-card-title"><i data-lucide="bar-chart-2"></i> Performance por Campanha</div>
+          <div class="chart-container"><canvas id="chart-cd-campaigns"></canvas></div>
+        </div>
+
+        <!-- Campaigns table -->
+        <div class="table-wrap" id="cd-campaigns-table"></div>
+      </section>
+
+      <!-- ────────────────────────────────────────────────────────
+           SECTION: RANKINGS
+           ──────────────────────────────────────────────────────── -->
+      <section id="section-rankings" class="section hidden">
+        <div class="section-header">
+          <h2><i data-lucide="trophy"></i> Rankings</h2>
+        </div>
+        <div id="rankings-content"></div>
+      </section>
+
+      <!-- ────────────────────────────────────────────────────────
+           SECTION: ASSISTANT
+           ──────────────────────────────────────────────────────── -->
+      <section id="section-assistant" class="section hidden"></section>
+
+      <!-- ────────────────────────────────────────────────────────
+           SECTION: SETTINGS
+           ──────────────────────────────────────────────────────── -->
+      <section id="section-settings" class="section hidden"></section>
+
+    </main>
+  </div><!-- /.main-content -->
+</div><!-- /.app-layout -->
+
+<!-- ============================================================
+     MODAL: ADD CLIENT
+     ============================================================ -->
+<div id="modal-add-client" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-title">➕ Novo Cliente</h3>
+      <button class="modal-close" onclick="closeAddClientModal()" aria-label="Fechar">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+
+    <form id="add-client-form" onsubmit="submitAddClient(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="input-name">Nome do Cliente *</label>
+          <input id="input-name" name="name" type="text" placeholder="Ex: Clínica Bella Vita" required />
+        </div>
+        <div class="form-group">
+          <label for="input-niche">Nicho *</label>
+          <select id="input-niche" name="niche" required>
+            <option value="">Selecione o nicho</option>
+            <option>Estética & Saúde</option>
+            <option>Fitness & Academia</option>
+            <option>Imóveis</option>
+            <option>Educação</option>
+            <option>E-commerce</option>
+            <option>Jurídico</option>
+            <option>Restaurante & Gastronomia</option>
+            <option>Moda</option>
+            <option>Tecnologia</option>
+            <option>Serviços</option>
+            <option>Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="input-acc-id">ID da Conta de Anúncio</label>
+          <input id="input-acc-id" name="accId" type="text" placeholder="act_123456789" />
+        </div>
+        <div class="form-group">
+          <label for="input-budget">Orçamento Mensal (R$)</label>
+          <input id="input-budget" name="budget" type="number" placeholder="10000" min="100" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="input-contact">Nome do Contato</label>
+          <input id="input-contact" name="contact" type="text" placeholder="João Silva" />
+        </div>
+        <div class="form-group">
+          <label for="input-email">E-mail</label>
+          <input id="input-email" name="email" type="email" placeholder="joao@empresa.com" />
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn-secondary" onclick="closeAddClientModal()">Cancelar</button>
+        <button type="submit" class="btn-primary"><i data-lucide="check"></i> Cadastrar Cliente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Notifications container -->
+<div id="notifications" aria-live="polite"></div>
+
+<!-- Scripts -->
+<script src="js/config.js"></script>
+<script src="js/facebook-api.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

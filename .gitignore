@@ -1,0 +1,6 @@
+# Nunca subir o arquivo que contém o token
+setup-token.html
+
+# Sistema
+.DS_Store
+Thumbs.db
