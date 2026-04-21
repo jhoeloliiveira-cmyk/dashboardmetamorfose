@@ -34,10 +34,12 @@ const FB_API = {
     const json = await res.json();
 
     if (json.error) {
-      const msg  = json.error.message || 'Erro desconhecido';
+      // Proxy can return string errors (e.g. FACEBOOK_TOKEN not set, network failure)
+      if (typeof json.error === 'string') throw new Error(json.error);
+      const msg  = json.error.message || JSON.stringify(json.error);
       const code = json.error.code;
-      if (code === 190)          throw new Error('Token expirado ou inválido. Gere um novo token.');
-      if (code === 100)          throw new Error('Parâmetro inválido: ' + msg);
+      if (code === 190) throw new Error('Token expirado ou inválido. Gere um novo token no Meta for Developers.');
+      if (code === 100) throw new Error('Parâmetro inválido: ' + msg);
       if (code === 200 || code === 10) throw new Error('Permissão negada. Adicione ads_read e business_management ao token.');
       throw new Error(`Erro Facebook API (${code}): ${msg}`);
     }
