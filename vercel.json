@@ -1,11 +1,9 @@
 {
   "functions": {
-    "api/facebook.js": {
-      "memory": 256,
-      "maxDuration": 30
-    }
+    "api/sync-meta.js":     { "memory": 512, "maxDuration": 60 },
+    "api/dashboard-data.js":{ "memory": 256, "maxDuration": 10 }
   },
-  "rewrites": [
-    { "source": "/api/facebook", "destination": "/api/facebook" }
+  "crons": [
+    { "path": "/api/sync-meta", "schedule": "0 6 * * *" }
   ]
 }
