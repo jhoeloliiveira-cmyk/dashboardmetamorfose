@@ -72,13 +72,13 @@ const FB_API = {
     const map = {
       today:      'today',
       yesterday:  'yesterday',
-      last_7d:    'last_7_d',
-      last_14d:   'last_14_d',
-      last_30d:   'last_30_d',
+      last_7d:    'last_7d',
+      last_14d:   'last_14d',
+      last_30d:   'last_30d',
       this_month: 'this_month',
       last_month: 'last_month',
     };
-    return { date_preset: map[period] || 'last_30_d' };
+    return { date_preset: map[period] || 'last_30d' };
   },
 
   // ── Campos de insights ────────────────────────────────────────────────────────
