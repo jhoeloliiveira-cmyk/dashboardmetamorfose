@@ -917,11 +917,15 @@ function renderSettings() {
       </label>
     `)}
 
-    ${sc('Exportação','database',`
+    ${sc('Exportação &amp; Dados','database',`
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Exporte dados da carteira.</p>
       <div style="display:flex;flex-direction:column;gap:7px">
         <button class="btn-ghost" onclick="exportAllCSV()"><i data-lucide="download"></i> Exportar todos como CSV</button>
         <button class="btn-ghost" onclick="exportAllJSON()"><i data-lucide="file-json-2"></i> Exportar JSON completo</button>
+        <hr style="border:none;border-top:1px solid var(--border);margin:4px 0"/>
+        <button class="btn-ghost" style="color:var(--gold);border-color:rgba(245,158,11,0.3)" onclick="removeDemoClients()">
+          <i data-lucide="eraser"></i> Remover clientes demo
+        </button>
         <button class="btn-danger" onclick="confirmClearData()"><i data-lucide="trash-2"></i> Limpar tokens e configs</button>
       </div>
     `)}
@@ -1006,6 +1010,20 @@ function showStatus(id, msg, type) {
   el.textContent = msg;
   el.className = `status-msg status-${type}`;
   setTimeout(() => { if (el) el.textContent = ''; }, 3000);
+}
+
+function removeDemoClients() {
+  // Demo clients have fake account IDs (act_ followed by sequential numbers) or no real FB data
+  const DEMO_IDS = new Set(MOCK_CLIENTS.map(c => c.id));
+  const before = STATE.clients.length;
+  STATE.clients = STATE.clients.filter(c => !DEMO_IDS.has(c.id));
+  const removed = before - STATE.clients.length;
+  if (removed > 0) {
+    showNotification(`🗑 ${removed} cliente(s) demo removido(s). Importe contas reais em Sincronização.`);
+    navigate('settings');
+  } else {
+    showNotification('ℹ️ Nenhum cliente demo encontrado.');
+  }
 }
 
 function confirmClearData() {

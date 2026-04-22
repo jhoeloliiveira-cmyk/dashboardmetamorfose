@@ -366,18 +366,75 @@ async function linkAdAccount(clientId, accountId) {
 function renderAccountsList(accounts) {
   const el = document.getElementById('fb-accounts-list');
   if (!el || !accounts.length) return;
+
+  // IDs already linked to a client
+  const linkedIds = new Set(STATE.clients.map(c => c.adAccount?.id).filter(Boolean));
+
   el.innerHTML = `
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${accounts.length} conta(s) encontrada(s)</p>
     <div class="accounts-table">
-      <div class="accounts-header"><span>Conta</span><span>ID</span><span>BM</span><span>Status</span></div>
-      ${accounts.map(a => `
+      <div class="accounts-header"><span>Conta</span><span>ID</span><span>BM</span><span>Status</span><span>Ação</span></div>
+      ${accounts.map(a => {
+        const already = linkedIds.has(a.id);
+        const activeOnly = a.status === 'ACTIVE';
+        return `
         <div class="accounts-row">
           <span style="font-weight:600;color:var(--text-primary)">${a.name}</span>
-          <span class="text-muted" style="font-size:11px">${a.id}</span>
-          <span class="text-muted" style="font-size:11px">${a.bm || '—'}</span>
-          <span><span class="badge badge-${a.status === 'ACTIVE' ? 'active' : 'paused'}">${a.status === 'ACTIVE' ? 'Ativa' : 'Inativa'}</span></span>
-        </div>
-      `).join('')}
+          <span style="font-size:11px;color:var(--text-muted)">${a.id}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${a.bm || '—'}</span>
+          <span><span class="badge badge-${activeOnly ? 'active' : 'paused'}">${activeOnly ? 'Ativa' : 'Inativa'}</span></span>
+          <span>
+            ${already
+              ? `<span style="font-size:11px;color:var(--green)">✓ Vinculada</span>`
+              : `<button class="btn-primary" style="padding:4px 10px;font-size:11px"
+                   onclick="importAccountAsClient('${a.id}','${a.name.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}','${a.currency||'BRL'}')">
+                   Importar
+                 </button>`
+            }
+          </span>
+        </div>`;
+      }).join('')}
     </div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:8px">
+      Clique em <strong>Importar</strong> para criar um cliente real com os dados da conta.
+      Clientes demo com IDs falsos <strong>não sincronizam</strong> — use
+      <em>Configurações → Remover clientes demo</em> para limpá-los.
+    </p>
   `;
+}
+
+async function importAccountAsClient(accountId, accountName, currency) {
+  showNotification(`⏳ Importando ${accountName}...`);
+
+  const initials = accountName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  const palette  = ['#3b82f6','#10b981','#f59e0b','#ec4899','#6366f1','#14b8a6','#f97316','#8b5cf6'];
+  const color    = palette[STATE.clients.length % palette.length];
+  const id       = 'fb-' + accountId.replace('act_', '');
+
+  // Remove any existing client with same account ID or same generated ID
+  STATE.clients = STATE.clients.filter(c => c.adAccount?.id !== accountId && c.id !== id);
+
+  const skeleton = {
+    id, name: accountName, niche: 'Outro',
+    status: 'active', boardStatus: 'active', platform: 'facebook',
+    initials, color,
+    adAccount: { id: accountId, name: accountName, currency: currency || 'BRL', status: 'ACTIVE' },
+    budget: { monthly: 0, daily: 0 },
+    contact: { name: '', email: '', phone: '' },
+    startDate: new Date().toISOString().split('T')[0],
+    notes: `Importado automaticamente da conta ${accountId}`,
+    campaigns: [],
+    daily30: [], daily14: [], daily7: [],
+    totals30: sumMetrics([]), totals14: sumMetrics([]), totals7: sumMetrics([]),
+  };
+
+  try {
+    const updated = await FB_API.loadClientFromAccount(skeleton, STATE.period);
+    STATE.clients.push(updated);
+    showNotification(`✅ ${accountName} importada com dados reais!`);
+    renderAccountsList(await FB_API.getAdAccounts());
+    navigate('client-detail', id);
+  } catch (e) {
+    showNotification(`❌ Erro ao importar ${accountName}: ${e.message}`);
+  }
 }
