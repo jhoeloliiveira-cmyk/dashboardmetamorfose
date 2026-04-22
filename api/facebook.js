@@ -3,7 +3,7 @@
 // Token armazenado em FACEBOOK_TOKEN (variável de ambiente do Vercel)
 // =============================================================================
 
-const FB_BASE = 'https://graph.facebook.com/v19.0';
+const FB_BASE = 'https://graph.facebook.com/v21.0';
 
 // Vercel Edge/Node — usa CommonJS para máxima compatibilidade
 module.exports = async function handler(req, res) {

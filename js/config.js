@@ -7,9 +7,9 @@ const CONFIG = {
   API: {
     MODE: 'mock', // 'mock' | 'facebook'
     FACEBOOK: {
-      BASE_URL: 'https://graph.facebook.com/v19.0',
+      BASE_URL: 'https://graph.facebook.com/v21.0',
       TOKEN: null,
-      VERSION: 'v19.0',
+      VERSION: 'v21.0',
     },
     AI_ASSISTANT: {
       ENABLED: false,
